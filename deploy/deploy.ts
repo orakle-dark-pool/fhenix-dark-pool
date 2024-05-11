@@ -9,15 +9,23 @@ const func: DeployFunction = async function () {
   const { deploy } = hre.deployments;
   const [signer] = await ethers.getSigners();
 
+  // print signer address
+  console.log(`Deploying from ${signer.address}`);
+
   if ((await ethers.provider.getBalance(signer.address)).toString() === "0") {
     if (hre.network.name === "localfhenix") {
       await fhenixjs.getFunds(signer.address);
     } else {
-        console.log(
-            chalk.red("Please fund your account with testnet FHE from https://faucet.fhenix.zone"));
-        return;
+      console.log(
+        chalk.red(
+          "Please fund your account with testnet FHE from https://faucet.fhenix.zone",
+        ),
+      );
+      return;
     }
   }
+
+  // deploy Counter contract
 
   const counter = await deploy("Counter", {
     from: signer.address,
