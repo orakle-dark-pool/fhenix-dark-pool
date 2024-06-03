@@ -5,9 +5,19 @@ import "./FugaziStorageLayout.sol";
 
 // This is the main diamond contract
 contract FugaziDiamond is FugaziStorageLayout {
+    // constructor
+    constructor(facetAndSelectorStruct[] memory _facetAndSelectors) {
+        owner = msg.sender;
+
+        // set selector to facet mapping
+        for (uint256 i; i < _facetAndSelectors.length; i++) {
+            selectorTofacet[_facetAndSelectors[i].selector] = _facetAndSelectors[i].facet;
+        }
+    }
+
     // Find facet for function that is called and execute the
     // function if a facet is found and return any value.
-    fallback() external /* payable */ {
+    fallback() external payable {
         // get facet from function selector
         address facet = selectorTofacet[msg.sig];
         require(facet != address(0));
@@ -25,4 +35,6 @@ contract FugaziDiamond is FugaziStorageLayout {
             default { return(0, returndatasize()) }
         }
     }
+
+    receive() external payable {}
 }

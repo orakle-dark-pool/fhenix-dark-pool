@@ -11,6 +11,24 @@ contract FugaziStorageLayout is Permissioned {
     using FHE for euint32;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                           Diamond                          */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    // errors
+
+    // events
+
+    // storage variables
+    address internal owner;
+
+    struct facetAndSelectorStruct {
+        address facet;
+        bytes4 selector;
+    }
+
+    mapping(bytes4 => address) internal selectorTofacet;
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                       Account Facet                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -22,6 +40,7 @@ contract FugaziStorageLayout is Permissioned {
 
     // storage variables
     mapping(address => mapping(address => euint32)) internal balanceOf; // owner => token => balance
+    // see the poolStateStruct in the Pool Registry Facet section to see lp balance
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    Pool Registry Facet                     */
@@ -37,7 +56,8 @@ contract FugaziStorageLayout is Permissioned {
     struct poolCreationInputStruct {
         address tokenX;
         address tokenY;
-        euint32 initialReserves;
+        euint32 initialReserveX;
+        euint32 initialReserveY;
     }
 
     mapping(address => mapping(address => bytes32)) internal poolIdMapping;
@@ -46,12 +66,15 @@ contract FugaziStorageLayout is Permissioned {
         // pool info
         address tokenX;
         address tokenY;
-        uint32 currentBatch;
+        uint32 epoch;
         // protocol account
         euint32 protocolX;
         euint32 protocolY;
         // information of each batch
         mapping(uint32 => batchStruct) batch; // batchStruct is defined in the Pool Action Facet section
+        // LP token shares
+        euint32 lpTotalSupply;
+        mapping(address => euint32) lpBalanceOf;
     }
 
     mapping(bytes32 => poolStateStruct) internal poolState;
@@ -78,19 +101,13 @@ contract FugaziStorageLayout is Permissioned {
         // final pool state
         euint32 reserveX1;
         euint32 reserveY1;
-        // mapping of each individual swap order
-        mapping(address => swapOrderStruct) swapOrder;
-        // mapping of each individual mint order
-        mapping(address => mintOrderStruct) mintOrder;
+        // mapping of each individual swap & mint order
+        mapping(address => orderStruct) order;
     }
 
-    struct swapOrderStruct {
+    struct orderStruct {
         euint32 swapX;
         euint32 swapY;
-        ebool claimed;
-    }
-
-    struct mintOrderStruct {
         euint32 mintX;
         euint32 mintY;
         ebool claimed;
@@ -98,15 +115,4 @@ contract FugaziStorageLayout is Permissioned {
 
     // numbers that will be used in claim()
     // TBD
-
-    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-    /*                           Diamond                          */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-    // errors
-
-    // events
-
-    // storage variables
-    mapping(bytes4 => address) internal selectorTofacet;
 }
