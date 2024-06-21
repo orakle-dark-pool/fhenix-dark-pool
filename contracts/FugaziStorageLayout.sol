@@ -15,17 +15,25 @@ contract FugaziStorageLayout is Permissioned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // errors
+    error noCorrespondingFacet();
+    error notOwner();
 
     // events
 
-    // storage variables
-    address internal owner;
+    // modifiers
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert notOwner();
+        _;
+    }
 
+    // structs
     struct facetAndSelectorStruct {
         address facet;
         bytes4 selector;
     }
 
+    // storage variables
+    address internal owner;
     mapping(bytes4 => address) internal selectorTofacet;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -38,9 +46,21 @@ contract FugaziStorageLayout is Permissioned {
     event Deposit(address recipient, address token);
     event Withdraw(address recipient, address token);
 
+    // modifiers
+
+    // structs
+    struct unclaimedOrderStruct {
+        bytes32 poolId;
+        uint32 epoch;
+    }
+
+    struct accountStruct {
+        mapping(address => euint32) balanceOf; // token address => balance
+        unclaimedOrderStruct[] unclaimedOrders;
+    }
+
     // storage variables
-    mapping(address => mapping(address => euint32)) internal balanceOf; // owner => token => balance
-    // see the poolStateStruct in the Pool Registry Facet section to see lp balance
+    mapping(address => accountStruct) internal account;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                    Pool Registry Facet                     */
@@ -52,7 +72,9 @@ contract FugaziStorageLayout is Permissioned {
     // events
     event PoolCreated(address tokenX, address tokenY, bytes32 poolId);
 
-    // storage variables
+    // modifiers
+
+    // structs
     struct poolCreationInputStruct {
         address tokenX;
         address tokenY;
@@ -60,23 +82,28 @@ contract FugaziStorageLayout is Permissioned {
         euint32 initialReserveY;
     }
 
-    mapping(address => mapping(address => bytes32)) internal poolIdMapping;
-
     struct poolStateStruct {
         // pool info
         address tokenX;
         address tokenY;
         uint32 epoch;
+        bool isSettling; // if true, any operation is not allowed. finish the settlement first
+        // pool reserves
+        euint32 reserveX;
+        euint32 reserveY;
         // protocol account
         euint32 protocolX;
         euint32 protocolY;
-        // information of each batch
-        mapping(uint32 => batchStruct) batch; // batchStruct is defined in the Pool Action Facet section
         // LP token shares
         euint32 lpTotalSupply;
         mapping(address => euint32) lpBalanceOf;
+        // information of each batch
+        mapping(uint32 => batchStruct) batch; // batchStruct is defined in the Pool Action Facet section
     }
 
+    // storage variables
+    uint32 internal feeBitShifts = 10;
+    mapping(address => mapping(address => bytes32)) internal poolIdMapping;
     mapping(bytes32 => poolStateStruct) internal poolState;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -84,10 +111,17 @@ contract FugaziStorageLayout is Permissioned {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     // errors
+    error PoolNotFound();
 
     // events
 
-    // storage variables
+    // modifiers
+    modifier onlyValidPool(bytes32 poolId) {
+        if (poolState[poolId].tokenX == address(0)) revert PoolNotFound();
+        _;
+    }
+
+    // structs
     struct batchStruct {
         // initial pool state
         euint32 reserveX0;
@@ -101,6 +135,9 @@ contract FugaziStorageLayout is Permissioned {
         // final pool state
         euint32 reserveX1;
         euint32 reserveY1;
+        // final output amounts
+        euint32 outX;
+        euint32 outY;
         // mapping of each individual swap & mint order
         mapping(address => orderStruct) order;
     }
@@ -113,6 +150,10 @@ contract FugaziStorageLayout is Permissioned {
         ebool claimed;
     }
 
-    // numbers that will be used in claim()
-    // TBD
+    struct intermidiateValuesStruct {
+        euint32 pricingX;
+        euint32 pricingY;
+    }
+
+    // storage variables
 }

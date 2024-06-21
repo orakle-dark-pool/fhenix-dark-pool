@@ -22,3 +22,7 @@ legacy
 coverage.json
 package-lock.json
 yarn.lock
+
+# python venv
+.venv/
+poetry.lock

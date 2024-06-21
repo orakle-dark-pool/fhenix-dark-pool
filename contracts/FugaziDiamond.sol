@@ -6,9 +6,11 @@ import "./FugaziStorageLayout.sol";
 // This is the main diamond contract
 contract FugaziDiamond is FugaziStorageLayout {
     // constructor
-    constructor(facetAndSelectorStruct[] memory _facetAndSelectors) {
+    constructor() {
         owner = msg.sender;
+    }
 
+    function addFacet(facetAndSelectorStruct[] memory _facetAndSelectors) external onlyOwner {
         // set selector to facet mapping
         for (uint256 i; i < _facetAndSelectors.length; i++) {
             selectorTofacet[_facetAndSelectors[i].selector] = _facetAndSelectors[i].facet;
@@ -20,7 +22,8 @@ contract FugaziDiamond is FugaziStorageLayout {
     fallback() external payable {
         // get facet from function selector
         address facet = selectorTofacet[msg.sig];
-        require(facet != address(0));
+        if (facet == address(0)) revert noCorrespondingFacet();
+
         // Execute external function from facet using delegatecall and return any value.
         assembly {
             // copy function selector and any arguments

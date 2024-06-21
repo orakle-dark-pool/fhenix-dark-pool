@@ -11,11 +11,16 @@ contract FugaziPoolRegistryFacet is FugaziStorageLayout {
         euint32 initialReserves = FHE.asEuint32(_initialReserves);
 
         // adjust the input; we cannot create a pool with reserves more than the owner has
-        euint32 availabeX = FHE.min(balanceOf[msg.sender][tokenX], FHE.shr(initialReserves, FHE.asEuint32(16)));
-        euint32 availabeY = FHE.min(balanceOf[msg.sender][tokenY], FHE.and(initialReserves, FHE.asEuint32(2 ^ 16 - 1)));
+        euint32 availabeX = FHE.min(account[msg.sender].balanceOf[tokenX], FHE.shr(initialReserves, FHE.asEuint32(16)));
+        euint32 availabeY =
+            FHE.min(account[msg.sender].balanceOf[tokenY], FHE.and(initialReserves, FHE.asEuint32(2 ^ 16 - 1)));
 
-        // minimum reserves: at least 1024 of each token
-        FHE.req(FHE.and(FHE.gt(availabeX, FHE.asEuint32(1024)), FHE.gt(availabeY, FHE.asEuint32(1024))));
+        // minimum reserves: at least 2048 of each token
+        FHE.req(FHE.and(FHE.gt(availabeX, FHE.asEuint32(2048)), FHE.gt(availabeY, FHE.asEuint32(2048))));
+
+        // deduct the token balance of msg.sender
+        account[msg.sender].balanceOf[tokenX] = account[msg.sender].balanceOf[tokenX] - availabeX;
+        account[msg.sender].balanceOf[tokenY] = account[msg.sender].balanceOf[tokenY] - availabeY;
 
         // construct input
         poolCreationInputStruct memory poolCreationInput = poolCreationInputStruct({
@@ -57,17 +62,14 @@ contract FugaziPoolRegistryFacet is FugaziStorageLayout {
         // set epoch
         $.epoch = 0;
 
-        // set protocol account balances
-        $.protocolX = FHE.shr(i.initialReserveX, FHE.asEuint32(10));
-        $.protocolY = FHE.shr(i.initialReserveY, FHE.asEuint32(10));
+        // take half of fee and set protocol account balances
+        $.protocolX = FHE.shr(i.initialReserveX, FHE.asEuint32(feeBitShifts + 1));
+        $.protocolY = FHE.shr(i.initialReserveY, FHE.asEuint32(feeBitShifts + 1));
 
-        // update the first batch
-        $.batch[0].reserveX0 = i.initialReserveX - $.protocolX;
-        $.batch[0].reserveY0 = i.initialReserveY - $.protocolY;
-
-        // mint LP token to the pool creator
+        // mint LP token and take another half of fee
         $.lpTotalSupply = FHE.max($.batch[0].reserveX0, $.batch[0].reserveY0);
-        $.lpBalanceOf[msg.sender] = $.lpTotalSupply;
+        $.lpBalanceOf[address(this)] = FHE.shr($.lpTotalSupply, FHE.asEuint32(feeBitShifts + 1)); // this will be locked permanently
+        $.lpBalanceOf[msg.sender] = $.lpTotalSupply - $.lpBalanceOf[address(this)];
     }
 
     // get pool id

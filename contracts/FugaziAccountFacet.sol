@@ -12,7 +12,7 @@ contract FugaziAccountFacet is FugaziStorageLayout {
         euint32 spent = IFHERC20(token).transferFromEncrypted(msg.sender, address(this), _amount);
 
         // update storage
-        balanceOf[recipient][token] = balanceOf[recipient][token] + spent;
+        account[msg.sender].balanceOf[token] = account[msg.sender].balanceOf[token] + spent;
 
         // emit event
         emit Deposit(recipient, token);
@@ -22,10 +22,10 @@ contract FugaziAccountFacet is FugaziStorageLayout {
     function withdraw(address recipient, address token, inEuint32 calldata _amount) external {
         // decode and adjust amount
         euint32 amount = FHE.asEuint32(_amount);
-        amount = FHE.min(amount, balanceOf[msg.sender][token]); // you cannot withdraw more than you have
+        amount = FHE.min(amount, account[msg.sender].balanceOf[token]); // you cannot withdraw more than you have
 
         // update storage
-        balanceOf[msg.sender][token] = balanceOf[msg.sender][token] - amount;
+        account[msg.sender].balanceOf[token] = account[msg.sender].balanceOf[token] - amount;
 
         // transfer
         IFHERC20(token).transferEncrypted(recipient, amount);
