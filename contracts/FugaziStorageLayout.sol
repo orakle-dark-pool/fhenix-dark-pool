@@ -87,6 +87,7 @@ contract FugaziStorageLayout is Permissioned {
         address tokenX;
         address tokenY;
         uint32 epoch;
+        uint32 lastSettlement;
         bool isSettling; // if true, any operation is not allowed. finish the settlement first
         // pool reserves
         euint32 reserveX;
@@ -112,8 +113,10 @@ contract FugaziStorageLayout is Permissioned {
 
     // errors
     error PoolNotFound();
+    error EpochNotEnded();
 
     // events
+    event epochSettled(bytes32 poolId, uint32 epoch);
 
     // modifiers
     modifier onlyValidPool(bytes32 poolId) {
@@ -158,4 +161,5 @@ contract FugaziStorageLayout is Permissioned {
     }
 
     // storage variables
+    uint32 internal epochTime = 1 minutes;
 }

@@ -5,6 +5,7 @@ import "./FugaziStorageLayout.sol";
 
 // This facet will handle swap & addLiquidity & removeLiquidity operations
 // TODO: finish the claim() function
+// TODO: finish the exitPool() function
 // TODO: enable the noise order
 // TODO: enable the fee charge mechanism
 contract FugaziPoolActionFacet is FugaziStorageLayout {
@@ -50,7 +51,7 @@ contract FugaziPoolActionFacet is FugaziStorageLayout {
         batch.mintX = batch.mintX + batch.order[msg.sender].mintX;
         batch.mintY = batch.mintY + batch.order[msg.sender].mintY;
 
-        // add the unclaimed order
+        // if this is the first order of epoch from trader then add the unclaimed order
         account[msg.sender].unclaimedOrders.push(unclaimedOrderStruct({poolId: poolId, epoch: $.epoch}));
     }
 
@@ -62,6 +63,9 @@ contract FugaziPoolActionFacet is FugaziStorageLayout {
         // get the pool and epoch
         poolStateStruct storage $ = poolState[poolId];
         batchStruct storage batch = $.batch[$.epoch];
+
+        // check if enough time has passed
+        if (block.timestamp < $.lastSettlement + epochTime) revert EpochNotEnded();
 
         // update the initial pool state
         batch.reserveX0 = $.reserveX;
@@ -95,8 +99,10 @@ contract FugaziPoolActionFacet is FugaziStorageLayout {
             */
         $.lpTotalSupply = $.lpTotalSupply + lpIncrement;
         $.lpBalanceOf[address(this)] = $.lpBalanceOf[address(this)] + lpIncrement;
+
         // increment the epoch
         $.epoch += 1;
+        $.lastSettlement = uint32(block.timestamp);
     }
 
     function claim(bytes32 poolId, uint32 epoch) external onlyValidPool(poolId) {
@@ -112,5 +118,18 @@ contract FugaziPoolActionFacet is FugaziStorageLayout {
         // claim the lp token from the batch
 
         // mark the order as claimed
+    }
+
+    function exitPool(bytes32 poolId, inEuint32 calldata _exitAmount) external onlyValidPool(poolId) {
+        // get the pool
+        poolStateStruct storage $ = poolState[poolId];
+
+        // adjust the amount; u cannot burn more than you have!
+
+        // deduct the LP token balance of msg.sender
+
+        // calculate the amount of tokenX and tokenY to be released
+
+        // update the reserves & account token balance
     }
 }

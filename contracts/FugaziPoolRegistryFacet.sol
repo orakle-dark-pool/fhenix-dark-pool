@@ -59,8 +59,9 @@ contract FugaziPoolRegistryFacet is FugaziStorageLayout {
         $.tokenX = i.tokenX;
         $.tokenY = i.tokenY;
 
-        // set epoch
+        // set epoch & settlement time
         $.epoch = 0;
+        $.lastSettlement = uint32(block.timestamp);
 
         // take half of fee and set protocol account balances
         $.protocolX = FHE.shr(i.initialReserveX, FHE.asEuint32(feeBitShifts + 1));
