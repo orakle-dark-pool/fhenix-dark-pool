@@ -4,6 +4,9 @@ pragma solidity >=0.8.13 <0.9.0;
 import "./FugaziStorageLayout.sol";
 
 // This facet will handle swap & addLiquidity & removeLiquidity operations
+// TODO: finish the claim() function
+// TODO: enable the noise order
+// TODO: enable the fee charge mechanism
 contract FugaziPoolActionFacet is FugaziStorageLayout {
     function submitOrder(bytes32 poolId, inEuint32 calldata _packedAmounts) external onlyValidPool(poolId) {
         // transform the type
@@ -66,12 +69,12 @@ contract FugaziPoolActionFacet is FugaziStorageLayout {
 
         // calculate the intermediate values
         intermidiateValuesStruct memory interMidiateValues;
-        interMidiateValues.pricingX = batch.reserveX0 + FHE.shl(batch.swapX, FHE.asEuint32(1)) + batch.mintX; // x0 + 2 * x_swap + x_mint
-        interMidiateValues.pricingY = batch.reserveY0 + FHE.shl(batch.swapY, FHE.asEuint32(1)) + batch.mintY; // y0 + 2 * y_swap + y_mint
+        interMidiateValues.XForPricing = batch.reserveX0 + FHE.shl(batch.swapX, FHE.asEuint32(1)) + batch.mintX; // x0 + 2 * x_swap + x_mint
+        interMidiateValues.YForPricing = batch.reserveY0 + FHE.shl(batch.swapY, FHE.asEuint32(1)) + batch.mintY; // y0 + 2 * y_swap + y_mint
 
         // calculate the output amounts
-        batch.outX = FHE.div(FHE.mul(batch.swapY, interMidiateValues.pricingX), interMidiateValues.pricingY);
-        batch.outY = FHE.div(FHE.mul(batch.swapX, interMidiateValues.pricingY), interMidiateValues.pricingX);
+        batch.outX = FHE.div(FHE.mul(batch.swapY, interMidiateValues.XForPricing), interMidiateValues.YForPricing);
+        batch.outY = FHE.div(FHE.mul(batch.swapX, interMidiateValues.YForPricing), interMidiateValues.XForPricing);
 
         // update the final pool state
         batch.reserveX1 = batch.reserveX0 + batch.swapX + batch.mintX - batch.outX;
@@ -83,7 +86,12 @@ contract FugaziPoolActionFacet is FugaziStorageLayout {
             FHE.div(FHE.mul($.lpTotalSupply, batch.mintY), batch.reserveY0)
         ); /*
             Although this is underestimation, it is the best we can do currently,
-            since encrypted operation is too expensive to handle the muldiv without overflow
+            since encrypted operation is too expensive to handle the muldiv without overflow.
+            The correct way to calculate the LP increment is:
+            t = T 
+                * (x_0 * y_mint + 2 * x_swap * y_mint + x_mint * y_0 + 2 * x_mint * y_swap + 2 * x_mint * y_mint) 
+                / (2 * x_0 * y_0 + 2 * x_0 * y_swap + 2 * x_swap * y_0 + x_0 * y_mint + x_mint * y_0)
+            See https://github.com/kosunghun317/alternative_AMMs/blob/master/notes/FMAMM_batch_math.ipynb for derivation.
             */
         $.lpTotalSupply = $.lpTotalSupply + lpIncrement;
         $.lpBalanceOf[address(this)] = $.lpBalanceOf[address(this)] + lpIncrement;

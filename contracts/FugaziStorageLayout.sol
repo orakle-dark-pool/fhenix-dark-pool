@@ -132,6 +132,8 @@ contract FugaziStorageLayout is Permissioned {
         // sum of mint orders
         euint32 mintX;
         euint32 mintY;
+        // intermidiate values
+        // intermidiateValuesStruct intermidiateValues;
         // final pool state
         euint32 reserveX1;
         euint32 reserveY1;
@@ -151,8 +153,8 @@ contract FugaziStorageLayout is Permissioned {
     }
 
     struct intermidiateValuesStruct {
-        euint32 pricingX;
-        euint32 pricingY;
+        euint32 XForPricing;
+        euint32 YForPricing;
     }
 
     // storage variables
