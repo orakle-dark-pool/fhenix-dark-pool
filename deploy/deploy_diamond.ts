@@ -25,18 +25,22 @@ const func: DeployFunction = async function () {
     }
   }
 
-  // deploy Counter contract
-
-  const counter = await deploy("Counter", {
+  // deploy FugaziDiamond contract
+  // Changed from "Counter" to "FugaziDiamond"
+  const fugaziDiamond = await deploy("FugaziDiamond", {
+    // Change 1
     from: signer.address,
     args: [],
     log: true,
     skipIfAlreadyDeployed: false,
   });
 
-  console.log(`Counter contract: `, counter.address);
+  // Changed logging message to reflect the new contract name
+  console.log(`FugaziDiamond contract: `, fugaziDiamond.address); // Change 2
 };
 
 export default func;
-func.id = "deploy_counter";
-func.tags = ["Counter"];
+// Changed func.id from "deploy_counter" to "deploy_fugaziDiamond"
+func.id = "deploy_fugaziDiamond"; // Change 3
+// Changed func.tags from ["Counter"] to ["FugaziDiamond"]
+func.tags = ["FugaziDiamond"]; // Change 4

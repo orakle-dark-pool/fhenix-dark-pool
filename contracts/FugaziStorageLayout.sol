@@ -114,6 +114,7 @@ contract FugaziStorageLayout is Permissioned {
     // errors
     error PoolNotFound();
     error EpochNotEnded();
+    error OrderAlreadyClaimed();
 
     // events
     event epochSettled(bytes32 poolId, uint32 epoch);
@@ -126,6 +127,13 @@ contract FugaziStorageLayout is Permissioned {
 
     // structs
     struct batchStruct {
+        // mapping of each individual swap & mint order
+        mapping(address => orderStruct) order;
+        ////////////////////////////////////////////////
+        //                                            //
+        //      state right before the settlement     //
+        //                                            //
+        ////////////////////////////////////////////////
         // initial pool state
         euint32 reserveX0;
         euint32 reserveY0;
@@ -135,16 +143,25 @@ contract FugaziStorageLayout is Permissioned {
         // sum of mint orders
         euint32 mintX;
         euint32 mintY;
-        // intermidiate values
-        // intermidiateValuesStruct intermidiateValues;
+        ////////////////////////////////////////////////
+        //                                            //
+        //   intermidiate values used in settlement   //
+        //                                            //
+        ////////////////////////////////////////////////
+        intermidiateValuesStruct intermidiateValues;
+        ////////////////////////////////////////////////
+        //                                            //
+        //      state right after the settlement      //
+        //                                            //
+        ////////////////////////////////////////////////
         // final pool state
         euint32 reserveX1;
         euint32 reserveY1;
         // final output amounts
         euint32 outX;
         euint32 outY;
-        // mapping of each individual swap & mint order
-        mapping(address => orderStruct) order;
+        // newly minted LP tokens
+        euint32 lpIncrement;
     }
 
     struct orderStruct {
@@ -152,7 +169,7 @@ contract FugaziStorageLayout is Permissioned {
         euint32 swapY;
         euint32 mintX;
         euint32 mintY;
-        ebool claimed;
+        bool claimed;
     }
 
     struct intermidiateValuesStruct {
