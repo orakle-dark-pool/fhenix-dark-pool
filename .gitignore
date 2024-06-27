@@ -7,7 +7,7 @@ coverage
 dist
 node_modules
 types
-deployments
+# deployments
 cache
 artifacts
 typechain-types
