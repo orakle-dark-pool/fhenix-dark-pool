@@ -9,12 +9,12 @@ const func: DeployFunction = async function () {
   const { deploy } = hre.deployments;
   const [signer] = await ethers.getSigners();
 
-  const name = "Name"; // Replace with your token name
-  const symbol = "SYM"; // Replace with your token symbol
+  const name = "FUGAZI token"; // Replace with your token name
+  const symbol = "FGZ"; // Replace with your token symbol
 
   console.log(`Deploying FHERC20 with name: ${name} and symbol: ${symbol}`);
 
-  const fherc20 = await deploy("FHERC20", {
+  const fherc20 = await deploy("FHERC20Mintable", {
     from: signer.address,
     args: [name, symbol],
     log: true,
@@ -24,5 +24,5 @@ const func: DeployFunction = async function () {
 };
 
 export default func;
-func.id = "deploy_fherc20s";
-func.tags = ["FHERC20"];
+func.id = "deploy_fherc20mintable";
+func.tags = ["FHERC20Mintable"];
